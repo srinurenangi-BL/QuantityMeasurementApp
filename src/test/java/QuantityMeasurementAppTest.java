@@ -15,6 +15,19 @@ public class QuantityMeasurementAppTest {
         testEqualityNullComparison();
         testEqualitySameReference();
         testEqualityNullUnit();
+
+        testConversionFeetToInches();
+        testConversionInchesToFeet();
+        testConversionYardsToInches();
+        testConversionInchesToYards();
+        testConversionCentimetersToInches();
+        testConversionFeetToYard();
+        testConversionRoundTripPreservesValue();
+        testConversionZeroValue();
+        testConversionNegativeValue();
+        testConversionInvalidUnitThrows();
+        testConversionNaNOrInfiniteThrows();
+        testConversionSameUnitReturnsOriginalValue();
         System.out.println("All tests passed.");
     }
 
@@ -112,6 +125,81 @@ public class QuantityMeasurementAppTest {
         }
     }
 
+    private static void testConversionFeetToInches() {
+        double result = QuantityMeasurementApp.convert(1.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES);
+        assertEquals(12.0, result, 1e-6, "Expected 1 foot to convert to 12 inches");
+    }
+
+    private static void testConversionInchesToFeet() {
+        double result = QuantityMeasurementApp.convert(24.0, QuantityMeasurementApp.LengthUnit.INCHES, QuantityMeasurementApp.LengthUnit.FEET);
+        assertEquals(2.0, result, 1e-6, "Expected 24 inches to convert to 2 feet");
+    }
+
+    private static void testConversionYardsToInches() {
+        double result = QuantityMeasurementApp.convert(1.0, QuantityMeasurementApp.LengthUnit.YARDS, QuantityMeasurementApp.LengthUnit.INCHES);
+        assertEquals(36.0, result, 1e-6, "Expected 1 yard to convert to 36 inches");
+    }
+
+    private static void testConversionInchesToYards() {
+        double result = QuantityMeasurementApp.convert(72.0, QuantityMeasurementApp.LengthUnit.INCHES, QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(2.0, result, 1e-6, "Expected 72 inches to convert to 2 yards");
+    }
+
+    private static void testConversionCentimetersToInches() {
+        double result = QuantityMeasurementApp.convert(2.54, QuantityMeasurementApp.LengthUnit.CENTIMETERS, QuantityMeasurementApp.LengthUnit.INCHES);
+        assertEquals(1.0, result, 1e-6, "Expected 2.54 centimeters to convert to 1 inch");
+    }
+
+    private static void testConversionFeetToYard() {
+        double result = QuantityMeasurementApp.convert(6.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(2.0, result, 1e-6, "Expected 6 feet to convert to 2 yards");
+    }
+
+    private static void testConversionRoundTripPreservesValue() {
+        double result = QuantityMeasurementApp.convert(QuantityMeasurementApp.convert(5.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.INCHES, QuantityMeasurementApp.LengthUnit.FEET);
+        assertEquals(5.0, result, 1e-6, "Round-trip conversion should preserve the original value");
+    }
+
+    private static void testConversionZeroValue() {
+        double result = QuantityMeasurementApp.convert(0.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES);
+        assertEquals(0.0, result, 1e-6, "Zero should convert to zero");
+    }
+
+    private static void testConversionNegativeValue() {
+        double result = QuantityMeasurementApp.convert(-1.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES);
+        assertEquals(-12.0, result, 1e-6, "Negative values should preserve sign");
+    }
+
+    private static void testConversionInvalidUnitThrows() {
+        try {
+            QuantityMeasurementApp.convert(1.0, null, QuantityMeasurementApp.LengthUnit.FEET);
+            throw new AssertionError("Expected null source unit to be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+    }
+
+    private static void testConversionNaNOrInfiniteThrows() {
+        try {
+            QuantityMeasurementApp.convert(Double.NaN, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES);
+            throw new AssertionError("Expected NaN to be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+
+        try {
+            QuantityMeasurementApp.convert(Double.POSITIVE_INFINITY, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.INCHES);
+            throw new AssertionError("Expected infinite value to be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+    }
+
+    private static void testConversionSameUnitReturnsOriginalValue() {
+        double result = QuantityMeasurementApp.convert(5.0, QuantityMeasurementApp.LengthUnit.FEET, QuantityMeasurementApp.LengthUnit.FEET);
+        assertEquals(5.0, result, 1e-6, "Converting to the same unit should return the original value");
+    }
+
     private static void assertTrue(boolean condition, String message) {
         if (!condition) {
             throw new AssertionError(message);
@@ -121,6 +209,12 @@ public class QuantityMeasurementAppTest {
     private static void assertFalse(boolean condition, String message) {
         if (condition) {
             throw new AssertionError(message);
+        }
+    }
+
+    private static void assertEquals(double expected, double actual, double epsilon, String message) {
+        if (Math.abs(expected - actual) > epsilon) {
+            throw new AssertionError(message + " Expected=" + expected + " Actual=" + actual);
         }
     }
 }
