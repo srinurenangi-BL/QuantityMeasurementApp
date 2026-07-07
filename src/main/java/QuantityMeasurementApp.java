@@ -8,23 +8,6 @@ public class QuantityMeasurementApp {
         System.out.println("Output: " + convert(1.0, LengthUnit.FEET, LengthUnit.INCHES));
     }
 
-    public enum LengthUnit {
-        FEET(1.0),
-        INCHES(1.0 / 12.0),
-        YARDS(3.0),
-        CENTIMETERS(0.393701 / 12.0);
-
-        private final double conversionFactorToFeet;
-
-        LengthUnit(double conversionFactorToFeet) {
-            this.conversionFactorToFeet = conversionFactorToFeet;
-        }
-
-        public double getConversionFactorToFeet() {
-            return conversionFactorToFeet;
-        }
-    }
-
     public static double convert(double value, LengthUnit sourceUnit, LengthUnit targetUnit) {
         validateValue(value);
         validateUnit(sourceUnit, "sourceUnit");
@@ -34,8 +17,8 @@ public class QuantityMeasurementApp {
             return value;
         }
 
-        double valueInFeet = value * sourceUnit.getConversionFactorToFeet();
-        return valueInFeet / targetUnit.getConversionFactorToFeet();
+        double valueInFeet = sourceUnit.convertToBaseUnit(value);
+        return targetUnit.convertFromBaseUnit(valueInFeet);
     }
 
     public static QuantityLength add(QuantityLength first, QuantityLength second, LengthUnit targetUnit) {
@@ -87,8 +70,8 @@ public class QuantityMeasurementApp {
                 return false;
             }
             QuantityLength other = (QuantityLength) obj;
-            double thisInFeet = this.value * this.unit.getConversionFactorToFeet();
-            double otherInFeet = other.value * other.unit.getConversionFactorToFeet();
+            double thisInFeet = this.unit.convertToBaseUnit(this.value);
+            double otherInFeet = other.unit.convertToBaseUnit(other.value);
             return Double.compare(thisInFeet, otherInFeet) == 0;
         }
 
