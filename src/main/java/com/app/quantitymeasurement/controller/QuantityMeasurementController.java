@@ -1,4 +1,13 @@
+package com.app.quantitymeasurement.controller;
+
+import com.app.quantitymeasurement.entity.QuantityDTO;
+import com.app.quantitymeasurement.services.IQuantityMeasurementService;
+
+import java.util.logging.Logger;
+
 public class QuantityMeasurementController {
+    private static final Logger LOGGER = Logger.getLogger(QuantityMeasurementController.class.getName());
+
     private final IQuantityMeasurementService service;
 
     public QuantityMeasurementController(IQuantityMeasurementService service) {
@@ -6,6 +15,7 @@ public class QuantityMeasurementController {
             throw new IllegalArgumentException("Service cannot be null");
         }
         this.service = service;
+        LOGGER.fine("QuantityMeasurementController initialized");
     }
 
     public QuantityDTO performComparison(QuantityDTO first, QuantityDTO second) {

@@ -1,3 +1,7 @@
+package com.app.quantitymeasurement.services;
+
+import com.app.quantitymeasurement.entity.QuantityDTO;
+
 public interface IQuantityMeasurementService {
     QuantityDTO compare(QuantityDTO first, QuantityDTO second);
 

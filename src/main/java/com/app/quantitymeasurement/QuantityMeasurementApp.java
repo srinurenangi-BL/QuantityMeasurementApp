@@ -1,23 +1,97 @@
+package com.app.quantitymeasurement;
+
+import com.app.quantitymeasurement.controller.QuantityMeasurementController;
+import com.app.quantitymeasurement.entity.QuantityDTO;
+import com.app.quantitymeasurement.entity.QuantityMeasurementEntity;
+import com.app.quantitymeasurement.repository.IQuantityMeasurementRepository;
+import com.app.quantitymeasurement.repository.QuantityMeasurementCacheRepository;
+import com.app.quantitymeasurement.repository.QuantityMeasurementDatabaseRepository;
+import com.app.quantitymeasurement.services.QuantityMeasurementServiceImpl;
+import com.app.quantitymeasurement.unit.IMeasurable;
+import com.app.quantitymeasurement.unit.LengthUnit;
+import com.app.quantitymeasurement.unit.WeightUnit;
+import com.app.quantitymeasurement.util.ApplicationConfig;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.logging.Logger;
+
 public class QuantityMeasurementApp {
+    private static final Logger LOGGER = Logger.getLogger(QuantityMeasurementApp.class.getName());
+
     private static QuantityMeasurementController controller;
+    private static IQuantityMeasurementRepository repository;
 
     public static void main(String[] args) {
-        initialize();
-        QuantityDTO first = new QuantityDTO(1.0, "FEET", "length", "compare", null, true, null);
-        QuantityDTO second = new QuantityDTO(12.0, "INCHES", "length", "compare", null, true, null);
-        QuantityDTO result = controller.performComparison(first, second);
-        System.out.println("Comparison result: " + result.getResult());
+        try {
+            initialize();
+            deleteAllMeasurements();
+            QuantityDTO first = new QuantityDTO(1.0, "FEET", "length", "compare", null, true, null);
+            QuantityDTO second = new QuantityDTO(12.0, "INCHES", "length", "compare", null, true, null);
+            QuantityDTO result = controller.performComparison(first, second);
+            LOGGER.info("Comparison result: " + result.getResult());
+            LOGGER.info("Stored measurements: " + repository.getTotalCount());
+        } finally {
+            closeResources();
+        }
     }
 
-    public static void initialize() {
+    public static synchronized void initialize() {
         if (controller == null) {
-            controller = new QuantityMeasurementController(new QuantityMeasurementServiceImpl(QuantityMeasurementCacheRepository.getInstance()));
+            repository = createRepository(new ApplicationConfig());
+            controller = new QuantityMeasurementController(new QuantityMeasurementServiceImpl(repository));
         }
+    }
+
+    public static synchronized void initialize(IQuantityMeasurementRepository repository) {
+        if (repository == null) {
+            throw new IllegalArgumentException("Repository cannot be null");
+        }
+        closeResources();
+        QuantityMeasurementApp.repository = repository;
+        controller = new QuantityMeasurementController(new QuantityMeasurementServiceImpl(repository));
     }
 
     public static QuantityMeasurementController getController() {
         initialize();
         return controller;
+    }
+
+    public static List<QuantityMeasurementEntity> getAllMeasurements() {
+        initialize();
+        return repository.findAll();
+    }
+
+    public static void deleteAllMeasurements() {
+        initialize();
+        repository.deleteAllMeasurements();
+    }
+
+    public static Map<String, Integer> getRepositoryPoolStatistics() {
+        initialize();
+        return repository.getPoolStatistics();
+    }
+
+    public static synchronized void closeResources() {
+        if (repository != null) {
+            repository.releaseResources();
+        }
+        repository = null;
+        controller = null;
+    }
+
+    private static IQuantityMeasurementRepository createRepository(ApplicationConfig config) {
+        String repositoryType = config.getRepositoryType().toLowerCase(Locale.ROOT);
+        if ("cache".equals(repositoryType)) {
+            LOGGER.info("Initializing cache repository");
+            return QuantityMeasurementCacheRepository.getInstance();
+        }
+        if ("database".equals(repositoryType)) {
+            LOGGER.info("Initializing database repository");
+            return new QuantityMeasurementDatabaseRepository(config);
+        }
+        throw new IllegalArgumentException("Unsupported repository type: " + repositoryType);
     }
 
     public static double convert(double value, LengthUnit sourceUnit, LengthUnit targetUnit) {
@@ -134,8 +208,8 @@ public class QuantityMeasurementApp {
     }
 
     public static class Quantity<U extends IMeasurable> {
-        final double value;
-        final U unit;
+        public final double value;
+        public final U unit;
 
         public Quantity(double value, U unit) {
             if (unit == null) {
@@ -238,8 +312,8 @@ public class QuantityMeasurementApp {
     }
 
     public static class QuantityLength {
-        final double value;
-        final LengthUnit unit;
+        public final double value;
+        public final LengthUnit unit;
 
         public QuantityLength(double value, LengthUnit unit) {
             if (unit == null) {
@@ -278,8 +352,8 @@ public class QuantityMeasurementApp {
     }
 
     public static class QuantityWeight {
-        final double value;
-        final WeightUnit unit;
+        public final double value;
+        public final WeightUnit unit;
 
         public QuantityWeight(double value, WeightUnit unit) {
             if (unit == null) {

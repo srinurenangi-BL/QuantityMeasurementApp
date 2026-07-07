@@ -1,4 +1,23 @@
+package com.app.quantitymeasurement;
+
+import com.app.quantitymeasurement.entity.QuantityDTO;
+import com.app.quantitymeasurement.unit.IMeasurable;
+import com.app.quantitymeasurement.unit.LengthUnit;
+import com.app.quantitymeasurement.unit.TemperatureUnit;
+import com.app.quantitymeasurement.unit.VolumeUnit;
+import com.app.quantitymeasurement.unit.WeightUnit;
+import org.junit.Test;
+
 public class QuantityMeasurementAppTest {
+    @Test
+    public void legacyRegressionSuitePasses() {
+        try {
+            main(new String[0]);
+        } finally {
+            QuantityMeasurementApp.closeResources();
+        }
+    }
+
     public static void main(String[] args) {
         testEqualityFeetToFeetSameValue();
         testEqualityInchToInchSameValue();

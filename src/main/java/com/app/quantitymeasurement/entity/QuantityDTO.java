@@ -1,3 +1,5 @@
+package com.app.quantitymeasurement.entity;
+
 public class QuantityDTO {
     private final double value;
     private final String unit;

@@ -1,3 +1,5 @@
+package com.app.quantitymeasurement.unit;
+
 public interface IMeasurable {
     @FunctionalInterface
     interface SupportsArithmetic {
