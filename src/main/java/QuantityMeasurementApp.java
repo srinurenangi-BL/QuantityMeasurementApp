@@ -1,11 +1,23 @@
 public class QuantityMeasurementApp {
+    private static QuantityMeasurementController controller;
+
     public static void main(String[] args) {
-        QuantityLength feetMeasurement = new QuantityLength(1.0, LengthUnit.FEET);
-        QuantityLength inchesMeasurement = new QuantityLength(12.0, LengthUnit.INCHES);
-        System.out.println("Input: Quantity(1.0, \"feet\") and Quantity(12.0, \"inches\")");
-        System.out.println("Output: Equal (" + feetMeasurement.equals(inchesMeasurement) + ")");
-        System.out.println("Input: convert(1.0, FEET, INCHES)");
-        System.out.println("Output: " + convert(1.0, LengthUnit.FEET, LengthUnit.INCHES));
+        initialize();
+        QuantityDTO first = new QuantityDTO(1.0, "FEET", "length", "compare", null, true, null);
+        QuantityDTO second = new QuantityDTO(12.0, "INCHES", "length", "compare", null, true, null);
+        QuantityDTO result = controller.performComparison(first, second);
+        System.out.println("Comparison result: " + result.getResult());
+    }
+
+    public static void initialize() {
+        if (controller == null) {
+            controller = new QuantityMeasurementController(new QuantityMeasurementServiceImpl(QuantityMeasurementCacheRepository.getInstance()));
+        }
+    }
+
+    public static QuantityMeasurementController getController() {
+        initialize();
+        return controller;
     }
 
     public static double convert(double value, LengthUnit sourceUnit, LengthUnit targetUnit) {
@@ -100,6 +112,27 @@ public class QuantityMeasurementApp {
         return addGenericQuantity(first, second, first.unit);
     }
 
+    private enum ArithmeticOperation {
+        ADD((left, right) -> left + right),
+        SUBTRACT((left, right) -> left - right),
+        DIVIDE((left, right) -> {
+            if (right == 0.0) {
+                throw new ArithmeticException("Cannot divide by zero");
+            }
+            return left / right;
+        });
+
+        private final java.util.function.DoubleBinaryOperator operation;
+
+        ArithmeticOperation(java.util.function.DoubleBinaryOperator operation) {
+            this.operation = operation;
+        }
+
+        double compute(double left, double right) {
+            return operation.applyAsDouble(left, right);
+        }
+    }
+
     public static class Quantity<U extends IMeasurable> {
         final double value;
         final U unit;
@@ -152,18 +185,55 @@ public class QuantityMeasurementApp {
         }
 
         public Quantity<U> add(Quantity<U> other) {
-            validateQuantity(other, "other");
-            return new Quantity<>(this.value + other.value, this.unit);
+            return add(other, this.unit);
         }
 
         public Quantity<U> add(Quantity<U> other, U targetUnit) {
+            return new Quantity<>(roundToTwoDecimals(performArithmetic(other, targetUnit, ArithmeticOperation.ADD)), targetUnit);
+        }
+
+        public Quantity<U> subtract(Quantity<U> other) {
+            return subtract(other, this.unit);
+        }
+
+        public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
+            return new Quantity<>(roundToTwoDecimals(performArithmetic(other, targetUnit, ArithmeticOperation.SUBTRACT)), targetUnit);
+        }
+
+        public double divide(Quantity<U> other) {
+            validateArithmeticOperands(other, null, false, ArithmeticOperation.DIVIDE);
+            double baseResult = performBaseArithmetic(other, ArithmeticOperation.DIVIDE);
+            return baseResult;
+        }
+
+        private double performArithmetic(Quantity<U> other, U targetUnit, ArithmeticOperation operation) {
+            validateArithmeticOperands(other, targetUnit, true, operation);
+            double baseResult = performBaseArithmetic(other, operation);
+            return targetUnit.convertFromBaseUnit(baseResult);
+        }
+
+        private double performBaseArithmetic(Quantity<U> other, ArithmeticOperation operation) {
+            double thisInBaseUnit = this.toBaseUnitValue();
+            double otherInBaseUnit = other.toBaseUnitValue();
+            return operation.compute(thisInBaseUnit, otherInBaseUnit);
+        }
+
+        private void validateArithmeticOperands(Quantity<U> other, U targetUnit, boolean targetUnitRequired, ArithmeticOperation operation) {
             validateQuantity(other, "other");
-            if (targetUnit == null) {
+            if (this.unit.getClass() != other.unit.getClass()) {
+                throw new IllegalArgumentException("Cannot perform arithmetic on quantities from different measurement categories");
+            }
+            if (targetUnitRequired && targetUnit == null) {
                 throw new IllegalArgumentException("Target unit cannot be null");
             }
-            double totalInBaseUnit = this.toBaseUnitValue() + other.toBaseUnitValue();
-            double convertedValue = targetUnit.convertFromBaseUnit(totalInBaseUnit);
-            return new Quantity<>(convertedValue, targetUnit);
+            if (targetUnitRequired && this.unit.getClass() != targetUnit.getClass()) {
+                throw new IllegalArgumentException("Target unit must be from the same measurement category");
+            }
+            this.unit.validateOperationSupport(operation.name());
+        }
+
+        private double roundToTwoDecimals(double value) {
+            return Math.round(value * 100.0) / 100.0;
         }
     }
 

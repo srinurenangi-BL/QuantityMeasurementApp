@@ -67,6 +67,24 @@ public class QuantityMeasurementAppTest {
         testWeightAdditionWithZero();
         testGenericQuantityLengthEquality();
         testGenericQuantityWeightEquality();
+        testTemperatureEqualityCelsiusToFahrenheit();
+        testTemperatureConversionCelsiusToFahrenheit();
+        testTemperatureUnsupportedArithmeticThrows();
+        testTemperatureVsLengthIncompatible();
+        testVolumeEqualityLitreToLitreSameValue();
+        testVolumeEqualityLitreToMillilitreEquivalentValue();
+        testVolumeEqualityVolumeVsLengthIncompatible();
+        testVolumeConversionLitreToMillilitre();
+        testVolumeConversionGallonToLitre();
+        testVolumeAdditionSameUnit();
+        testVolumeAdditionCrossUnit();
+        testVolumeAdditionExplicitTargetUnit();
+        testControllerAndServiceFlow();
+        testSubtractionCrossUnitImplicitTargetUnit();
+        testSubtractionExplicitTargetUnit();
+        testDivisionSameUnit();
+        testDivisionCrossUnit();
+        testDivisionByZeroThrows();
         System.out.println("All tests passed.");
     }
 
@@ -455,6 +473,130 @@ public class QuantityMeasurementAppTest {
         assertTrue(oneKilogram.equals(oneThousandGrams), "Expected generic weight quantity equality to work across units");
     }
 
+    private static void testTemperatureEqualityCelsiusToFahrenheit() {
+        QuantityMeasurementApp.Quantity<TemperatureUnit> zeroCelsius = new QuantityMeasurementApp.Quantity<>(0.0, TemperatureUnit.CELSIUS);
+        QuantityMeasurementApp.Quantity<TemperatureUnit> thirtyTwoFahrenheit = new QuantityMeasurementApp.Quantity<>(32.0, TemperatureUnit.FAHRENHEIT);
+        assertTrue(zeroCelsius.equals(thirtyTwoFahrenheit), "Expected 0 Celsius to equal 32 Fahrenheit");
+    }
+
+    private static void testTemperatureConversionCelsiusToFahrenheit() {
+        QuantityMeasurementApp.Quantity<TemperatureUnit> result = new QuantityMeasurementApp.Quantity<>(100.0, TemperatureUnit.CELSIUS)
+                .convertTo(TemperatureUnit.FAHRENHEIT);
+        assertQuantity(result, 212.0, TemperatureUnit.FAHRENHEIT, "Expected 100 Celsius to convert to 212 Fahrenheit");
+    }
+
+    private static void testTemperatureUnsupportedArithmeticThrows() {
+        try {
+            new QuantityMeasurementApp.Quantity<>(100.0, TemperatureUnit.CELSIUS)
+                    .add(new QuantityMeasurementApp.Quantity<>(50.0, TemperatureUnit.CELSIUS));
+            throw new AssertionError("Expected temperature addition to be unsupported");
+        } catch (UnsupportedOperationException expected) {
+            // expected
+        }
+
+        try {
+            new QuantityMeasurementApp.Quantity<>(100.0, TemperatureUnit.CELSIUS)
+                    .subtract(new QuantityMeasurementApp.Quantity<>(50.0, TemperatureUnit.CELSIUS));
+            throw new AssertionError("Expected temperature subtraction to be unsupported");
+        } catch (UnsupportedOperationException expected) {
+            // expected
+        }
+    }
+
+    private static void testTemperatureVsLengthIncompatible() {
+        QuantityMeasurementApp.Quantity<TemperatureUnit> oneHundredCelsius = new QuantityMeasurementApp.Quantity<>(100.0, TemperatureUnit.CELSIUS);
+        QuantityMeasurementApp.Quantity<LengthUnit> oneHundredFeet = new QuantityMeasurementApp.Quantity<>(100.0, LengthUnit.FEET);
+        assertFalse(oneHundredCelsius.equals(oneHundredFeet), "Expected temperature and length quantities to be incomparable");
+    }
+
+    private static void testVolumeEqualityLitreToLitreSameValue() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> oneLitre = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE);
+        QuantityMeasurementApp.Quantity<VolumeUnit> anotherLitre = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE);
+        assertTrue(oneLitre.equals(anotherLitre), "Expected 1 litre to equal 1 litre");
+    }
+
+    private static void testVolumeEqualityLitreToMillilitreEquivalentValue() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> oneLitre = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE);
+        QuantityMeasurementApp.Quantity<VolumeUnit> oneThousandMillilitres = new QuantityMeasurementApp.Quantity<>(1000.0, VolumeUnit.MILLILITRE);
+        assertTrue(oneLitre.equals(oneThousandMillilitres), "Expected 1 litre to equal 1000 ml");
+    }
+
+    private static void testVolumeEqualityVolumeVsLengthIncompatible() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> oneLitre = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE);
+        QuantityMeasurementApp.Quantity<LengthUnit> oneFoot = new QuantityMeasurementApp.Quantity<>(1.0, LengthUnit.FEET);
+        assertFalse(oneLitre.equals(oneFoot), "Expected volume and length quantities to be incomparable");
+    }
+
+    private static void testVolumeConversionLitreToMillilitre() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE).convertTo(VolumeUnit.MILLILITRE);
+        assertQuantity(result, 1000.0, VolumeUnit.MILLILITRE, "Expected 1 litre to convert to 1000 ml");
+    }
+
+    private static void testVolumeConversionGallonToLitre() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.GALLON).convertTo(VolumeUnit.LITRE);
+        assertEquals(3.78541, result.value, 1e-5, "Expected 1 gallon to convert to about 3.78541 litres");
+        if (result.unit != VolumeUnit.LITRE) {
+            throw new AssertionError("Expected result unit to be LITRE");
+        }
+    }
+
+    private static void testVolumeAdditionSameUnit() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE).add(new QuantityMeasurementApp.Quantity<>(2.0, VolumeUnit.LITRE));
+        assertQuantity(result, 3.0, VolumeUnit.LITRE, "Expected 1 L + 2 L = 3 L");
+    }
+
+    private static void testVolumeAdditionCrossUnit() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE).add(new QuantityMeasurementApp.Quantity<>(1000.0, VolumeUnit.MILLILITRE));
+        assertQuantity(result, 2.0, VolumeUnit.LITRE, "Expected 1 L + 1000 ml = 2 L");
+    }
+
+    private static void testVolumeAdditionExplicitTargetUnit() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE).add(new QuantityMeasurementApp.Quantity<>(1000.0, VolumeUnit.MILLILITRE), VolumeUnit.MILLILITRE);
+        assertQuantity(result, 2000.0, VolumeUnit.MILLILITRE, "Expected explicit target unit MILLILITRE to produce 2000 ml");
+    }
+
+    private static void testControllerAndServiceFlow() {
+        QuantityMeasurementApp.initialize();
+        QuantityDTO first = new QuantityDTO(1.0, "FEET", "length", "compare", null, true, null);
+        QuantityDTO second = new QuantityDTO(12.0, "INCHES", "length", "compare", null, true, null);
+        QuantityDTO result = QuantityMeasurementApp.getController().performComparison(first, second);
+        assertTrue(result.isSuccess(), "Expected controller/service flow to succeed");
+    }
+
+    private static void testSubtractionCrossUnitImplicitTargetUnit() {
+        QuantityMeasurementApp.Quantity<LengthUnit> result = new QuantityMeasurementApp.Quantity<>(10.0, LengthUnit.FEET)
+                .subtract(new QuantityMeasurementApp.Quantity<>(6.0, LengthUnit.INCHES));
+        assertQuantity(result, 9.5, LengthUnit.FEET, "Expected 10 feet - 6 inches to equal 9.5 feet");
+    }
+
+    private static void testSubtractionExplicitTargetUnit() {
+        QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(5.0, VolumeUnit.LITRE)
+                .subtract(new QuantityMeasurementApp.Quantity<>(2.0, VolumeUnit.LITRE), VolumeUnit.MILLILITRE);
+        assertQuantity(result, 3000.0, VolumeUnit.MILLILITRE, "Expected explicit target unit subtraction to work");
+    }
+
+    private static void testDivisionSameUnit() {
+        double result = new QuantityMeasurementApp.Quantity<>(10.0, LengthUnit.FEET)
+                .divide(new QuantityMeasurementApp.Quantity<>(2.0, LengthUnit.FEET));
+        assertEquals(5.0, result, 1e-6, "Expected 10 feet / 2 feet = 5");
+    }
+
+    private static void testDivisionCrossUnit() {
+        double result = new QuantityMeasurementApp.Quantity<>(24.0, LengthUnit.INCHES)
+                .divide(new QuantityMeasurementApp.Quantity<>(2.0, LengthUnit.FEET));
+        assertEquals(1.0, result, 1e-6, "Expected 24 inches / 2 feet = 1");
+    }
+
+    private static void testDivisionByZeroThrows() {
+        try {
+            new QuantityMeasurementApp.Quantity<>(10.0, LengthUnit.FEET)
+                    .divide(new QuantityMeasurementApp.Quantity<>(0.0, LengthUnit.FEET));
+            throw new AssertionError("Expected division by zero to throw ArithmeticException");
+        } catch (ArithmeticException expected) {
+            // expected
+        }
+    }
+
     private static void assertTrue(boolean condition, String message) {
         if (!condition) {
             throw new AssertionError(message);
@@ -481,6 +623,20 @@ public class QuantityMeasurementAppTest {
     }
 
     private static void assertQuantity(QuantityMeasurementApp.QuantityWeight actual, double expectedValue, WeightUnit expectedUnit, String message) {
+        assertEquals(expectedValue, actual.value, 1e-6, message);
+        if (actual.unit != expectedUnit) {
+            throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
+        }
+    }
+
+    private static void assertQuantity(QuantityMeasurementApp.Quantity<VolumeUnit> actual, double expectedValue, VolumeUnit expectedUnit, String message) {
+        assertEquals(expectedValue, actual.value, 1e-6, message);
+        if (actual.unit != expectedUnit) {
+            throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
+        }
+    }
+
+    private static <U extends IMeasurable> void assertQuantity(QuantityMeasurementApp.Quantity<U> actual, double expectedValue, U expectedUnit, String message) {
         assertEquals(expectedValue, actual.value, 1e-6, message);
         if (actual.unit != expectedUnit) {
             throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
