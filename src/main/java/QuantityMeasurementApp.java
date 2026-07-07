@@ -38,9 +38,23 @@ public class QuantityMeasurementApp {
         return valueInFeet / targetUnit.getConversionFactorToFeet();
     }
 
+    public static QuantityLength add(QuantityLength first, QuantityLength second, LengthUnit targetUnit) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        validateUnit(targetUnit, "targetUnit");
+
+        double totalInFeet = first.toFeet() + second.toFeet();
+        double convertedValue = convert(totalInFeet, LengthUnit.FEET, targetUnit);
+        return new QuantityLength(convertedValue, targetUnit);
+    }
+
+    public static QuantityLength add(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit, LengthUnit targetUnit) {
+        return add(new QuantityLength(firstValue, firstUnit), new QuantityLength(secondValue, secondUnit), targetUnit);
+    }
+
     public static class QuantityLength {
-        private final double value;
-        private final LengthUnit unit;
+        final double value;
+        final LengthUnit unit;
 
         public QuantityLength(double value, LengthUnit unit) {
             if (unit == null) {
@@ -52,6 +66,10 @@ public class QuantityMeasurementApp {
 
         public double convertTo(LengthUnit targetUnit) {
             return convert(this.value, this.unit, targetUnit);
+        }
+
+        public double toFeet() {
+            return convert(this.value, this.unit, LengthUnit.FEET);
         }
 
         @Override
@@ -84,5 +102,13 @@ public class QuantityMeasurementApp {
         if (unit == null) {
             throw new IllegalArgumentException(parameterName + " cannot be null");
         }
+    }
+
+    private static void validateQuantity(QuantityLength quantity, String parameterName) {
+        if (quantity == null) {
+            throw new IllegalArgumentException(parameterName + " cannot be null");
+        }
+        validateValue(quantity.value);
+        validateUnit(quantity.unit, parameterName + ".unit");
     }
 }

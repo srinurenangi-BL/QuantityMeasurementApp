@@ -28,6 +28,19 @@ public class QuantityMeasurementAppTest {
         testConversionInvalidUnitThrows();
         testConversionNaNOrInfiniteThrows();
         testConversionSameUnitReturnsOriginalValue();
+
+        testAdditionSameUnitFeet();
+        testAdditionSameUnitInches();
+        testAdditionCrossUnitFeetAndInches();
+        testAdditionCrossUnitInchesAndFeet();
+        testAdditionCrossUnitYardAndFeet();
+        testAdditionCrossUnitCentimeterAndInch();
+        testAdditionCommutativity();
+        testAdditionWithZero();
+        testAdditionNegativeValues();
+        testAdditionNullSecondOperand();
+        testAdditionLargeValues();
+        testAdditionSmallValues();
         System.out.println("All tests passed.");
     }
 
@@ -200,6 +213,74 @@ public class QuantityMeasurementAppTest {
         assertEquals(5.0, result, 1e-6, "Converting to the same unit should return the original value");
     }
 
+    private static void testAdditionSameUnitFeet() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(2.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 3.0, QuantityMeasurementApp.LengthUnit.FEET, "Expected 1 foot + 2 feet = 3 feet");
+    }
+
+    private static void testAdditionSameUnitInches() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(6.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(6.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.INCHES);
+        assertQuantity(result, 12.0, QuantityMeasurementApp.LengthUnit.INCHES, "Expected 6 inches + 6 inches = 12 inches");
+    }
+
+    private static void testAdditionCrossUnitFeetAndInches() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 2.0, QuantityMeasurementApp.LengthUnit.FEET, "Expected 1 foot + 12 inches = 2 feet");
+    }
+
+    private static void testAdditionCrossUnitInchesAndFeet() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.INCHES);
+        assertQuantity(result, 24.0, QuantityMeasurementApp.LengthUnit.INCHES, "Expected 12 inches + 1 foot = 24 inches");
+    }
+
+    private static void testAdditionCrossUnitYardAndFeet() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.YARDS), new QuantityMeasurementApp.QuantityLength(3.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertQuantity(result, 2.0, QuantityMeasurementApp.LengthUnit.YARDS, "Expected 1 yard + 3 feet = 2 yards");
+    }
+
+    private static void testAdditionCrossUnitCentimeterAndInch() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(2.54, QuantityMeasurementApp.LengthUnit.CENTIMETERS), new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.CENTIMETERS);
+        assertEquals(5.08, result.value, 1e-3, "Expected 2.54 cm + 1 inch = 5.08 cm");
+        if (result.unit != QuantityMeasurementApp.LengthUnit.CENTIMETERS) {
+            throw new AssertionError("Expected result unit to be CENTIMETERS");
+        }
+    }
+
+    private static void testAdditionCommutativity() {
+        QuantityMeasurementApp.QuantityLength left = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.FEET);
+        QuantityMeasurementApp.QuantityLength right = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(left, right.value, right.unit, "Addition should be commutative");
+    }
+
+    private static void testAdditionWithZero() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(5.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(0.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 5.0, QuantityMeasurementApp.LengthUnit.FEET, "Adding zero should preserve the value");
+    }
+
+    private static void testAdditionNegativeValues() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(5.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(-2.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 3.0, QuantityMeasurementApp.LengthUnit.FEET, "Expected 5 feet + (-2 feet) = 3 feet");
+    }
+
+    private static void testAdditionNullSecondOperand() {
+        try {
+            QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), null, QuantityMeasurementApp.LengthUnit.FEET);
+            throw new AssertionError("Expected null operand to be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+    }
+
+    private static void testAdditionLargeValues() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1e6, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(1e6, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 2e6, QuantityMeasurementApp.LengthUnit.FEET, "Expected large values to add correctly");
+    }
+
+    private static void testAdditionSmallValues() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(0.001, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(0.002, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 0.003, QuantityMeasurementApp.LengthUnit.FEET, "Expected small values to add correctly");
+    }
+
     private static void assertTrue(boolean condition, String message) {
         if (!condition) {
             throw new AssertionError(message);
@@ -215,6 +296,13 @@ public class QuantityMeasurementAppTest {
     private static void assertEquals(double expected, double actual, double epsilon, String message) {
         if (Math.abs(expected - actual) > epsilon) {
             throw new AssertionError(message + " Expected=" + expected + " Actual=" + actual);
+        }
+    }
+
+    private static void assertQuantity(QuantityMeasurementApp.QuantityLength actual, double expectedValue, QuantityMeasurementApp.LengthUnit expectedUnit, String message) {
+        assertEquals(expectedValue, actual.value, 1e-6, message);
+        if (actual.unit != expectedUnit) {
+            throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
         }
     }
 }
