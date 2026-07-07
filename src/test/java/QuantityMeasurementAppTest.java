@@ -41,6 +41,19 @@ public class QuantityMeasurementAppTest {
         testAdditionNullSecondOperand();
         testAdditionLargeValues();
         testAdditionSmallValues();
+
+        testAdditionExplicitTargetUnitFeet();
+        testAdditionExplicitTargetUnitInches();
+        testAdditionExplicitTargetUnitYards();
+        testAdditionExplicitTargetUnitCentimeters();
+        testAdditionExplicitTargetUnitSameAsFirstOperand();
+        testAdditionExplicitTargetUnitSameAsSecondOperand();
+        testAdditionExplicitTargetUnitCommutativity();
+        testAdditionExplicitTargetUnitWithZero();
+        testAdditionExplicitTargetUnitNegativeValues();
+        testAdditionExplicitTargetUnitNullTargetUnit();
+        testAdditionExplicitTargetUnitLargeToSmallScale();
+        testAdditionExplicitTargetUnitSmallToLargeScale();
         System.out.println("All tests passed.");
     }
 
@@ -279,6 +292,83 @@ public class QuantityMeasurementAppTest {
     private static void testAdditionSmallValues() {
         QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(0.001, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(0.002, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
         assertQuantity(result, 0.003, QuantityMeasurementApp.LengthUnit.FEET, "Expected small values to add correctly");
+    }
+
+    private static void testAdditionExplicitTargetUnitFeet() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 2.0, QuantityMeasurementApp.LengthUnit.FEET, "Expected explicit target unit FEET to produce 2 feet");
+    }
+
+    private static void testAdditionExplicitTargetUnitInches() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.INCHES);
+        assertQuantity(result, 24.0, QuantityMeasurementApp.LengthUnit.INCHES, "Expected explicit target unit INCHES to produce 24 inches");
+    }
+
+    private static void testAdditionExplicitTargetUnitYards() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(0.6666667, result.value, 1e-4, "Expected explicit target unit YARDS to produce about 0.667 yards");
+        if (result.unit != QuantityMeasurementApp.LengthUnit.YARDS) {
+            throw new AssertionError("Expected result unit to be YARDS");
+        }
+    }
+
+    private static void testAdditionExplicitTargetUnitCentimeters() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.CENTIMETERS);
+        assertEquals(5.08, result.value, 1e-3, "Expected explicit target unit CENTIMETERS to produce about 5.08 cm");
+        if (result.unit != QuantityMeasurementApp.LengthUnit.CENTIMETERS) {
+            throw new AssertionError("Expected result unit to be CENTIMETERS");
+        }
+    }
+
+    private static void testAdditionExplicitTargetUnitSameAsFirstOperand() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(2.0, QuantityMeasurementApp.LengthUnit.YARDS), new QuantityMeasurementApp.QuantityLength(3.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertQuantity(result, 3.0, QuantityMeasurementApp.LengthUnit.YARDS, "Expected target unit matching first operand to yield 3 yards");
+    }
+
+    private static void testAdditionExplicitTargetUnitSameAsSecondOperand() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(2.0, QuantityMeasurementApp.LengthUnit.YARDS), new QuantityMeasurementApp.QuantityLength(3.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.FEET);
+        assertQuantity(result, 9.0, QuantityMeasurementApp.LengthUnit.FEET, "Expected target unit matching second operand to yield 9 feet");
+    }
+
+    private static void testAdditionExplicitTargetUnitCommutativity() {
+        QuantityMeasurementApp.QuantityLength left = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.YARDS);
+        QuantityMeasurementApp.QuantityLength right = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(left.value, right.value, 1e-6, "Addition should be commutative for explicit target units");
+    }
+
+    private static void testAdditionExplicitTargetUnitWithZero() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(5.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(0.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(1.6666667, result.value, 1e-4, "Expected 5 feet + 0 inches to equal about 1.667 yards");
+        if (result.unit != QuantityMeasurementApp.LengthUnit.YARDS) {
+            throw new AssertionError("Expected result unit to be YARDS");
+        }
+    }
+
+    private static void testAdditionExplicitTargetUnitNegativeValues() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(5.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(-2.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.INCHES);
+        assertQuantity(result, 36.0, QuantityMeasurementApp.LengthUnit.INCHES, "Expected 5 feet + (-2 feet) to produce 36 inches");
+    }
+
+    private static void testAdditionExplicitTargetUnitNullTargetUnit() {
+        try {
+            QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), null);
+            throw new AssertionError("Expected null target unit to be rejected");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+    }
+
+    private static void testAdditionExplicitTargetUnitLargeToSmallScale() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(1000.0, QuantityMeasurementApp.LengthUnit.FEET), new QuantityMeasurementApp.QuantityLength(500.0, QuantityMeasurementApp.LengthUnit.FEET), QuantityMeasurementApp.LengthUnit.INCHES);
+        assertQuantity(result, 18000.0, QuantityMeasurementApp.LengthUnit.INCHES, "Expected large-to-small conversion to preserve the sum");
+    }
+
+    private static void testAdditionExplicitTargetUnitSmallToLargeScale() {
+        QuantityMeasurementApp.QuantityLength result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), new QuantityMeasurementApp.QuantityLength(12.0, QuantityMeasurementApp.LengthUnit.INCHES), QuantityMeasurementApp.LengthUnit.YARDS);
+        assertEquals(0.6666667, result.value, 1e-4, "Expected small-to-large conversion to preserve the sum");
+        if (result.unit != QuantityMeasurementApp.LengthUnit.YARDS) {
+            throw new AssertionError("Expected result unit to be YARDS");
+        }
     }
 
     private static void assertTrue(boolean condition, String message) {

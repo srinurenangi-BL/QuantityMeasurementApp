@@ -48,6 +48,12 @@ public class QuantityMeasurementApp {
         return new QuantityLength(convertedValue, targetUnit);
     }
 
+    public static QuantityLength add(QuantityLength first, QuantityLength second) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        return new QuantityLength(first.toFeet() + second.toFeet(), LengthUnit.FEET);
+    }
+
     public static QuantityLength add(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit, LengthUnit targetUnit) {
         return add(new QuantityLength(firstValue, firstUnit), new QuantityLength(secondValue, secondUnit), targetUnit);
     }
