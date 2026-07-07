@@ -1,49 +1,81 @@
 package com.app.quantitymeasurement.integration;
 
-import com.app.quantitymeasurement.QuantityMeasurementApp;
-import com.app.quantitymeasurement.entity.QuantityDTO;
-import com.app.quantitymeasurement.repository.QuantityMeasurementDatabaseRepository;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import com.app.quantitymeasurement.model.QuantityDTO;
+import com.app.quantitymeasurement.model.QuantityMeasurementRequest;
+import com.app.quantitymeasurement.repository.QuantityMeasurementRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class QuantityMeasurementIntegrationTest {
-    private QuantityMeasurementDatabaseRepository repository;
+@SpringBootTest(properties = {
+        "spring.datasource.url=jdbc:h2:mem:integration-test;DB_CLOSE_DELAY=-1;MODE=LEGACY",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
+})
+@AutoConfigureMockMvc
+class QuantityMeasurementIntegrationTest {
+    @Autowired
+    private MockMvc mockMvc;
 
-    @Before
-    public void setUp() {
-        repository = new QuantityMeasurementDatabaseRepository(
-                "jdbc:h2:mem:qmintegration;DB_CLOSE_DELAY=-1;MODE=LEGACY",
-                "sa",
-                "",
-                1,
-                4,
-                500
-        );
-        repository.deleteAllMeasurements();
-        QuantityMeasurementApp.initialize(repository);
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @After
-    public void tearDown() {
-        QuantityMeasurementApp.closeResources();
+    @Autowired
+    private QuantityMeasurementRepository repository;
+
+    @BeforeEach
+    void setUp() {
+        repository.deleteAll();
     }
 
     @Test
-    public void shouldPersistControllerServiceOperationToDatabase() {
-        QuantityDTO result = QuantityMeasurementApp.getController().performAddition(
-                new QuantityDTO(1.0, "FEET", "length", "add", null, true, null),
-                new QuantityDTO(12.0, "INCHES", "length", "add", null, true, null),
+    void shouldRunMultipleRestOperationsAndPersistHistory() throws Exception {
+        QuantityMeasurementRequest request = new QuantityMeasurementRequest(
+                new QuantityDTO(1.0, "FEET", "length", null, null, true, null),
+                new QuantityDTO(12.0, "INCHES", "length", null, null, true, null),
                 "FEET"
         );
 
-        assertTrue(result.isSuccess());
-        assertEquals("2.0", result.getResult());
-        assertEquals(1, repository.getTotalCount());
-        assertEquals(1, repository.getMeasurementsByType("length").size());
-        assertEquals(1, repository.getMeasurementsByOperation("add").size());
+        mockMvc.perform(post("/api/v1/quantities/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value("2.0"));
+
+        mockMvc.perform(get("/api/v1/quantities/count/add"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(1));
+    }
+
+    @Test
+    void shouldExposeActuatorAndOpenApiEndpoints() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+
+        mockMvc.perform(get("/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Quantity Measurement API")));
+    }
+
+    @Test
+    void shouldReturnBadRequestForUnsupportedUnit() throws Exception {
+        mockMvc.perform(post("/api/v1/quantities/convert")
+                        .param("targetUnit", "LIGHTYEARS")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new QuantityDTO(1.0, "FEET", "length", null, null, true, null))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 }

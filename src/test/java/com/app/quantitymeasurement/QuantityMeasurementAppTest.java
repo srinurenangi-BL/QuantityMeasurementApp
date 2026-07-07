@@ -1,24 +1,19 @@
 package com.app.quantitymeasurement;
 
-import com.app.quantitymeasurement.entity.QuantityDTO;
 import com.app.quantitymeasurement.unit.IMeasurable;
 import com.app.quantitymeasurement.unit.LengthUnit;
 import com.app.quantitymeasurement.unit.TemperatureUnit;
 import com.app.quantitymeasurement.unit.VolumeUnit;
 import com.app.quantitymeasurement.unit.WeightUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QuantityMeasurementAppTest {
     @Test
     public void legacyRegressionSuitePasses() {
-        try {
-            main(new String[0]);
-        } finally {
-            QuantityMeasurementApp.closeResources();
-        }
+        runLegacyRegressionSuite();
     }
 
-    public static void main(String[] args) {
+    private static void runLegacyRegressionSuite() {
         testEqualityFeetToFeetSameValue();
         testEqualityInchToInchSameValue();
         testEqualityEquivalentValuesDifferentUnits();
@@ -98,7 +93,6 @@ public class QuantityMeasurementAppTest {
         testVolumeAdditionSameUnit();
         testVolumeAdditionCrossUnit();
         testVolumeAdditionExplicitTargetUnit();
-        testControllerAndServiceFlow();
         testSubtractionCrossUnitImplicitTargetUnit();
         testSubtractionExplicitTargetUnit();
         testDivisionSameUnit();
@@ -572,14 +566,6 @@ public class QuantityMeasurementAppTest {
     private static void testVolumeAdditionExplicitTargetUnit() {
         QuantityMeasurementApp.Quantity<VolumeUnit> result = new QuantityMeasurementApp.Quantity<>(1.0, VolumeUnit.LITRE).add(new QuantityMeasurementApp.Quantity<>(1000.0, VolumeUnit.MILLILITRE), VolumeUnit.MILLILITRE);
         assertQuantity(result, 2000.0, VolumeUnit.MILLILITRE, "Expected explicit target unit MILLILITRE to produce 2000 ml");
-    }
-
-    private static void testControllerAndServiceFlow() {
-        QuantityMeasurementApp.initialize();
-        QuantityDTO first = new QuantityDTO(1.0, "FEET", "length", "compare", null, true, null);
-        QuantityDTO second = new QuantityDTO(12.0, "INCHES", "length", "compare", null, true, null);
-        QuantityDTO result = QuantityMeasurementApp.getController().performComparison(first, second);
-        assertTrue(result.isSuccess(), "Expected controller/service flow to succeed");
     }
 
     private static void testSubtractionCrossUnitImplicitTargetUnit() {
