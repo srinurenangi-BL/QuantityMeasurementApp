@@ -21,34 +21,7 @@ public class QuantityMeasurementApp {
         return targetUnit.convertFromBaseUnit(valueInFeet);
     }
 
-    public static QuantityLength add(QuantityLength first, QuantityLength second, LengthUnit targetUnit) {
-        validateQuantity(first, "first");
-        validateQuantity(second, "second");
-        validateUnit(targetUnit, "targetUnit");
-
-        double totalInFeet = first.toFeet() + second.toFeet();
-        double convertedValue = convert(totalInFeet, LengthUnit.FEET, targetUnit);
-        return new QuantityLength(convertedValue, targetUnit);
-    }
-
-    public static QuantityLength add(QuantityLength first, QuantityLength second) {
-        validateQuantity(first, "first");
-        validateQuantity(second, "second");
-        return new QuantityLength(first.toFeet() + second.toFeet(), LengthUnit.FEET);
-    }
-
-    public static QuantityLength add(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit, LengthUnit targetUnit) {
-        return add(new QuantityLength(firstValue, firstUnit), new QuantityLength(secondValue, secondUnit), targetUnit);
-    }
-
-    public static QuantityWeight convert(QuantityWeight quantity, WeightUnit targetUnit) {
-        validateQuantity(quantity, "quantity");
-        validateUnit(targetUnit, "targetUnit");
-        double convertedValue = convert(quantity.value, quantity.unit, targetUnit);
-        return new QuantityWeight(convertedValue, targetUnit);
-    }
-
-    public static double convert(double value, WeightUnit sourceUnit, WeightUnit targetUnit) {
+    public static <U extends IMeasurable> double convert(double value, U sourceUnit, U targetUnit) {
         validateValue(value);
         validateUnit(sourceUnit, "sourceUnit");
         validateUnit(targetUnit, "targetUnit");
@@ -57,32 +30,141 @@ public class QuantityMeasurementApp {
             return value;
         }
 
-        double valueInKilograms = sourceUnit.convertToBaseUnit(value);
-        return targetUnit.convertFromBaseUnit(valueInKilograms);
+        double valueInBaseUnit = sourceUnit.convertToBaseUnit(value);
+        return targetUnit.convertFromBaseUnit(valueInBaseUnit);
+    }
+
+    public static <U extends IMeasurable> Quantity<U> convert(Quantity<U> quantity, U targetUnit) {
+        validateQuantity(quantity, "quantity");
+        validateUnit(targetUnit, "targetUnit");
+        double convertedValue = convert(quantity.value, quantity.unit, targetUnit);
+        return new Quantity<>(convertedValue, targetUnit);
+    }
+
+    public static QuantityLength add(QuantityLength first, QuantityLength second, LengthUnit targetUnit) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        Quantity<LengthUnit> result = addGenericQuantity(new Quantity<>(first.value, first.unit), new Quantity<>(second.value, second.unit), targetUnit);
+        return new QuantityLength(result.value, result.unit);
+    }
+
+    public static QuantityLength add(QuantityLength first, QuantityLength second) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        Quantity<LengthUnit> result = addGenericQuantity(new Quantity<>(first.value, first.unit), new Quantity<>(second.value, second.unit));
+        return new QuantityLength(result.value, result.unit);
+    }
+
+    public static QuantityLength add(double firstValue, LengthUnit firstUnit, double secondValue, LengthUnit secondUnit, LengthUnit targetUnit) {
+        return add(new QuantityLength(firstValue, firstUnit), new QuantityLength(secondValue, secondUnit), targetUnit);
+    }
+
+    public static QuantityWeight convert(QuantityWeight quantity, WeightUnit targetUnit) {
+        validateQuantity(quantity, "quantity");
+        Quantity<WeightUnit> result = convert(new Quantity<>(quantity.value, quantity.unit), targetUnit);
+        return new QuantityWeight(result.value, result.unit);
     }
 
     public static QuantityWeight add(QuantityWeight first, QuantityWeight second) {
         validateQuantity(first, "first");
         validateQuantity(second, "second");
-        return new QuantityWeight(first.toKilograms() + second.toKilograms(), WeightUnit.KILOGRAM);
+        Quantity<WeightUnit> result = addGenericQuantity(new Quantity<>(first.value, first.unit), new Quantity<>(second.value, second.unit));
+        return new QuantityWeight(result.value, result.unit);
     }
 
     public static QuantityWeight add(QuantityWeight first, QuantityWeight second, WeightUnit targetUnit) {
         validateQuantity(first, "first");
         validateQuantity(second, "second");
+        Quantity<WeightUnit> result = addGenericQuantity(new Quantity<>(first.value, first.unit), new Quantity<>(second.value, second.unit), targetUnit);
+        return new QuantityWeight(result.value, result.unit);
+    }
+
+    public static Quantity<WeightUnit> add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit) {
+        return addGenericQuantity(new Quantity<>(firstValue, firstUnit), new Quantity<>(secondValue, secondUnit));
+    }
+
+    public static Quantity<WeightUnit> add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit, WeightUnit targetUnit) {
+        return addGenericQuantity(new Quantity<>(firstValue, firstUnit), new Quantity<>(secondValue, secondUnit), targetUnit);
+    }
+
+    private static <U extends IMeasurable> Quantity<U> addGenericQuantity(Quantity<U> first, Quantity<U> second, U targetUnit) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
         validateUnit(targetUnit, "targetUnit");
-
-        double totalInKilograms = first.toKilograms() + second.toKilograms();
-        double convertedValue = convert(totalInKilograms, WeightUnit.KILOGRAM, targetUnit);
-        return new QuantityWeight(convertedValue, targetUnit);
+        double totalInBaseUnit = first.toBaseUnitValue() + second.toBaseUnitValue();
+        double convertedValue = targetUnit.convertFromBaseUnit(totalInBaseUnit);
+        return new Quantity<>(convertedValue, targetUnit);
     }
 
-    public static QuantityWeight add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit) {
-        return add(new QuantityWeight(firstValue, firstUnit), new QuantityWeight(secondValue, secondUnit));
+    public static <U extends IMeasurable> Quantity<U> addGenericQuantity(Quantity<U> first, Quantity<U> second) {
+        return addGenericQuantity(first, second, first.unit);
     }
 
-    public static QuantityWeight add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit, WeightUnit targetUnit) {
-        return add(new QuantityWeight(firstValue, firstUnit), new QuantityWeight(secondValue, secondUnit), targetUnit);
+    public static class Quantity<U extends IMeasurable> {
+        final double value;
+        final U unit;
+
+        public Quantity(double value, U unit) {
+            if (unit == null) {
+                throw new IllegalArgumentException("Unit cannot be null");
+            }
+            this.value = value;
+            this.unit = unit;
+        }
+
+        public Quantity<U> convertTo(U targetUnit) {
+            if (targetUnit == null) {
+                throw new IllegalArgumentException("Target unit cannot be null");
+            }
+            double convertedValue = convert(this.value, this.unit, targetUnit);
+            return new Quantity<>(convertedValue, targetUnit);
+        }
+
+        public double toBaseUnitValue() {
+            return this.unit.convertToBaseUnit(this.value);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            Quantity<?> other = (Quantity<?>) obj;
+            if (this.unit.getClass() != other.unit.getClass()) {
+                return false;
+            }
+            double thisInBaseUnit = this.unit.convertToBaseUnit(this.value);
+            double otherInBaseUnit = other.unit.convertToBaseUnit(other.value);
+            return Double.compare(thisInBaseUnit, otherInBaseUnit) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Double.hashCode(this.unit.convertToBaseUnit(this.value));
+        }
+
+        @Override
+        public String toString() {
+            return value + " " + unit.getUnitName();
+        }
+
+        public Quantity<U> add(Quantity<U> other) {
+            validateQuantity(other, "other");
+            return new Quantity<>(this.value + other.value, this.unit);
+        }
+
+        public Quantity<U> add(Quantity<U> other, U targetUnit) {
+            validateQuantity(other, "other");
+            if (targetUnit == null) {
+                throw new IllegalArgumentException("Target unit cannot be null");
+            }
+            double totalInBaseUnit = this.toBaseUnitValue() + other.toBaseUnitValue();
+            double convertedValue = targetUnit.convertFromBaseUnit(totalInBaseUnit);
+            return new Quantity<>(convertedValue, targetUnit);
+        }
     }
 
     public static class QuantityLength {
@@ -183,6 +265,12 @@ public class QuantityMeasurementApp {
         }
     }
 
+    private static <U extends IMeasurable> void validateUnit(U unit, String parameterName) {
+        if (unit == null) {
+            throw new IllegalArgumentException(parameterName + " cannot be null");
+        }
+    }
+
     private static void validateQuantity(QuantityLength quantity, String parameterName) {
         if (quantity == null) {
             throw new IllegalArgumentException(parameterName + " cannot be null");
@@ -192,6 +280,14 @@ public class QuantityMeasurementApp {
     }
 
     private static void validateQuantity(QuantityWeight quantity, String parameterName) {
+        if (quantity == null) {
+            throw new IllegalArgumentException(parameterName + " cannot be null");
+        }
+        validateValue(quantity.value);
+        validateUnit(quantity.unit, parameterName + ".unit");
+    }
+
+    private static <U extends IMeasurable> void validateQuantity(Quantity<U> quantity, String parameterName) {
         if (quantity == null) {
             throw new IllegalArgumentException(parameterName + " cannot be null");
         }

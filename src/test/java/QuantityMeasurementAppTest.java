@@ -65,6 +65,8 @@ public class QuantityMeasurementAppTest {
         testWeightAdditionCrossUnit();
         testWeightAdditionExplicitTargetUnit();
         testWeightAdditionWithZero();
+        testGenericQuantityLengthEquality();
+        testGenericQuantityWeightEquality();
         System.out.println("All tests passed.");
     }
 
@@ -439,6 +441,18 @@ public class QuantityMeasurementAppTest {
     private static void testWeightAdditionWithZero() {
         QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityWeight(5.0, WeightUnit.KILOGRAM), new QuantityMeasurementApp.QuantityWeight(0.0, WeightUnit.GRAM));
         assertQuantity(result, 5.0, WeightUnit.KILOGRAM, "Adding zero should preserve the weight value");
+    }
+
+    private static void testGenericQuantityLengthEquality() {
+        QuantityMeasurementApp.Quantity<LengthUnit> oneFoot = new QuantityMeasurementApp.Quantity<>(1.0, LengthUnit.FEET);
+        QuantityMeasurementApp.Quantity<LengthUnit> twelveInches = new QuantityMeasurementApp.Quantity<>(12.0, LengthUnit.INCHES);
+        assertTrue(oneFoot.equals(twelveInches), "Expected generic length quantity equality to work across units");
+    }
+
+    private static void testGenericQuantityWeightEquality() {
+        QuantityMeasurementApp.Quantity<WeightUnit> oneKilogram = new QuantityMeasurementApp.Quantity<>(1.0, WeightUnit.KILOGRAM);
+        QuantityMeasurementApp.Quantity<WeightUnit> oneThousandGrams = new QuantityMeasurementApp.Quantity<>(1000.0, WeightUnit.GRAM);
+        assertTrue(oneKilogram.equals(oneThousandGrams), "Expected generic weight quantity equality to work across units");
     }
 
     private static void assertTrue(boolean condition, String message) {

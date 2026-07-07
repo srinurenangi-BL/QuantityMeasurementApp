@@ -1,4 +1,4 @@
-public enum WeightUnit {
+public enum WeightUnit implements IMeasurable {
     KILOGRAM(1.0),
     GRAM(0.001),
     POUND(0.453592);
@@ -9,7 +9,7 @@ public enum WeightUnit {
         this.conversionFactorToKilograms = conversionFactorToKilograms;
     }
 
-    public double getConversionFactorToKilograms() {
+    public double getConversionFactor() {
         return conversionFactorToKilograms;
     }
 
@@ -25,5 +25,9 @@ public enum WeightUnit {
             throw new IllegalArgumentException("Value must be a finite number");
         }
         return baseValue / conversionFactorToKilograms;
+    }
+
+    public String getUnitName() {
+        return name();
     }
 }
