@@ -41,6 +41,50 @@ public class QuantityMeasurementApp {
         return add(new QuantityLength(firstValue, firstUnit), new QuantityLength(secondValue, secondUnit), targetUnit);
     }
 
+    public static QuantityWeight convert(QuantityWeight quantity, WeightUnit targetUnit) {
+        validateQuantity(quantity, "quantity");
+        validateUnit(targetUnit, "targetUnit");
+        double convertedValue = convert(quantity.value, quantity.unit, targetUnit);
+        return new QuantityWeight(convertedValue, targetUnit);
+    }
+
+    public static double convert(double value, WeightUnit sourceUnit, WeightUnit targetUnit) {
+        validateValue(value);
+        validateUnit(sourceUnit, "sourceUnit");
+        validateUnit(targetUnit, "targetUnit");
+
+        if (sourceUnit == targetUnit) {
+            return value;
+        }
+
+        double valueInKilograms = sourceUnit.convertToBaseUnit(value);
+        return targetUnit.convertFromBaseUnit(valueInKilograms);
+    }
+
+    public static QuantityWeight add(QuantityWeight first, QuantityWeight second) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        return new QuantityWeight(first.toKilograms() + second.toKilograms(), WeightUnit.KILOGRAM);
+    }
+
+    public static QuantityWeight add(QuantityWeight first, QuantityWeight second, WeightUnit targetUnit) {
+        validateQuantity(first, "first");
+        validateQuantity(second, "second");
+        validateUnit(targetUnit, "targetUnit");
+
+        double totalInKilograms = first.toKilograms() + second.toKilograms();
+        double convertedValue = convert(totalInKilograms, WeightUnit.KILOGRAM, targetUnit);
+        return new QuantityWeight(convertedValue, targetUnit);
+    }
+
+    public static QuantityWeight add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit) {
+        return add(new QuantityWeight(firstValue, firstUnit), new QuantityWeight(secondValue, secondUnit));
+    }
+
+    public static QuantityWeight add(double firstValue, WeightUnit firstUnit, double secondValue, WeightUnit secondUnit, WeightUnit targetUnit) {
+        return add(new QuantityWeight(firstValue, firstUnit), new QuantityWeight(secondValue, secondUnit), targetUnit);
+    }
+
     public static class QuantityLength {
         final double value;
         final LengthUnit unit;
@@ -81,6 +125,46 @@ public class QuantityMeasurementApp {
         }
     }
 
+    public static class QuantityWeight {
+        final double value;
+        final WeightUnit unit;
+
+        public QuantityWeight(double value, WeightUnit unit) {
+            if (unit == null) {
+                throw new IllegalArgumentException("Unit cannot be null");
+            }
+            this.value = value;
+            this.unit = unit;
+        }
+
+        public QuantityWeight convertTo(WeightUnit targetUnit) {
+            return convert(this, targetUnit);
+        }
+
+        public double toKilograms() {
+            return convert(this.value, this.unit, WeightUnit.KILOGRAM);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            QuantityWeight other = (QuantityWeight) obj;
+            double thisInKilograms = this.unit.convertToBaseUnit(this.value);
+            double otherInKilograms = other.unit.convertToBaseUnit(other.value);
+            return Double.compare(thisInKilograms, otherInKilograms) == 0;
+        }
+
+        @Override
+        public String toString() {
+            return value + " " + unit;
+        }
+    }
+
     private static void validateValue(double value) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException("Value must be a finite number");
@@ -93,7 +177,21 @@ public class QuantityMeasurementApp {
         }
     }
 
+    private static void validateUnit(WeightUnit unit, String parameterName) {
+        if (unit == null) {
+            throw new IllegalArgumentException(parameterName + " cannot be null");
+        }
+    }
+
     private static void validateQuantity(QuantityLength quantity, String parameterName) {
+        if (quantity == null) {
+            throw new IllegalArgumentException(parameterName + " cannot be null");
+        }
+        validateValue(quantity.value);
+        validateUnit(quantity.unit, parameterName + ".unit");
+    }
+
+    private static void validateQuantity(QuantityWeight quantity, String parameterName) {
         if (quantity == null) {
             throw new IllegalArgumentException(parameterName + " cannot be null");
         }

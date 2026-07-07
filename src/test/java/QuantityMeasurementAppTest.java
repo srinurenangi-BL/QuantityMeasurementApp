@@ -54,6 +54,17 @@ public class QuantityMeasurementAppTest {
         testAdditionExplicitTargetUnitNullTargetUnit();
         testAdditionExplicitTargetUnitLargeToSmallScale();
         testAdditionExplicitTargetUnitSmallToLargeScale();
+
+        testWeightEqualityKilogramToKilogramSameValue();
+        testWeightEqualityKilogramToGramEquivalentValue();
+        testWeightEqualityWeightVsLengthIncompatible();
+        testWeightEqualityNullComparison();
+        testWeightConversionKilogramToGram();
+        testWeightConversionPoundToKilogram();
+        testWeightAdditionSameUnit();
+        testWeightAdditionCrossUnit();
+        testWeightAdditionExplicitTargetUnit();
+        testWeightAdditionWithZero();
         System.out.println("All tests passed.");
     }
 
@@ -371,6 +382,65 @@ public class QuantityMeasurementAppTest {
         }
     }
 
+    private static void testWeightEqualityKilogramToKilogramSameValue() {
+        QuantityMeasurementApp.QuantityWeight oneKilogram = new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        QuantityMeasurementApp.QuantityWeight anotherKilogram = new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        assertTrue(oneKilogram.equals(anotherKilogram), "Expected 1 kg to equal 1 kg");
+    }
+
+    private static void testWeightEqualityKilogramToGramEquivalentValue() {
+        QuantityMeasurementApp.QuantityWeight oneKilogram = new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        QuantityMeasurementApp.QuantityWeight oneThousandGrams = new QuantityMeasurementApp.QuantityWeight(1000.0, WeightUnit.GRAM);
+        assertTrue(oneKilogram.equals(oneThousandGrams), "Expected 1 kg to equal 1000 g");
+    }
+
+    private static void testWeightEqualityWeightVsLengthIncompatible() {
+        QuantityMeasurementApp.QuantityWeight oneKilogram = new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        QuantityMeasurementApp.QuantityLength oneFoot = new QuantityMeasurementApp.QuantityLength(1.0, LengthUnit.FEET);
+        assertFalse(oneKilogram.equals(oneFoot), "Expected weight and length values to be incomparable");
+    }
+
+    private static void testWeightEqualityNullComparison() {
+        QuantityMeasurementApp.QuantityWeight oneKilogram = new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        assertFalse(oneKilogram.equals(null), "Expected weight comparison with null to return false");
+    }
+
+    private static void testWeightConversionKilogramToGram() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.convert(new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM), WeightUnit.GRAM);
+        assertEquals(1000.0, result.value, 1e-6, "Expected 1 kg to convert to 1000 g");
+        if (result.unit != WeightUnit.GRAM) {
+            throw new AssertionError("Expected result unit to be GRAM");
+        }
+    }
+
+    private static void testWeightConversionPoundToKilogram() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.convert(new QuantityMeasurementApp.QuantityWeight(2.20462, WeightUnit.POUND), WeightUnit.KILOGRAM);
+        assertEquals(1.0, result.value, 1e-5, "Expected 2.20462 lb to convert to about 1 kg");
+        if (result.unit != WeightUnit.KILOGRAM) {
+            throw new AssertionError("Expected result unit to be KILOGRAM");
+        }
+    }
+
+    private static void testWeightAdditionSameUnit() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM), new QuantityMeasurementApp.QuantityWeight(2.0, WeightUnit.KILOGRAM));
+        assertQuantity(result, 3.0, WeightUnit.KILOGRAM, "Expected 1 kg + 2 kg = 3 kg");
+    }
+
+    private static void testWeightAdditionCrossUnit() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM), new QuantityMeasurementApp.QuantityWeight(1000.0, WeightUnit.GRAM));
+        assertQuantity(result, 2.0, WeightUnit.KILOGRAM, "Expected 1 kg + 1000 g = 2 kg");
+    }
+
+    private static void testWeightAdditionExplicitTargetUnit() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityWeight(1.0, WeightUnit.KILOGRAM), new QuantityMeasurementApp.QuantityWeight(1000.0, WeightUnit.GRAM), WeightUnit.GRAM);
+        assertQuantity(result, 2000.0, WeightUnit.GRAM, "Expected explicit target unit GRAM to produce 2000 g");
+    }
+
+    private static void testWeightAdditionWithZero() {
+        QuantityMeasurementApp.QuantityWeight result = QuantityMeasurementApp.add(new QuantityMeasurementApp.QuantityWeight(5.0, WeightUnit.KILOGRAM), new QuantityMeasurementApp.QuantityWeight(0.0, WeightUnit.GRAM));
+        assertQuantity(result, 5.0, WeightUnit.KILOGRAM, "Adding zero should preserve the weight value");
+    }
+
     private static void assertTrue(boolean condition, String message) {
         if (!condition) {
             throw new AssertionError(message);
@@ -390,6 +460,13 @@ public class QuantityMeasurementAppTest {
     }
 
     private static void assertQuantity(QuantityMeasurementApp.QuantityLength actual, double expectedValue, LengthUnit expectedUnit, String message) {
+        assertEquals(expectedValue, actual.value, 1e-6, message);
+        if (actual.unit != expectedUnit) {
+            throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
+        }
+    }
+
+    private static void assertQuantity(QuantityMeasurementApp.QuantityWeight actual, double expectedValue, WeightUnit expectedUnit, String message) {
         assertEquals(expectedValue, actual.value, 1e-6, message);
         if (actual.unit != expectedUnit) {
             throw new AssertionError(message + " Expected unit=" + expectedUnit + " Actual unit=" + actual.unit);
